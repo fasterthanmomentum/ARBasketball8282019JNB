@@ -35,7 +35,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         // Create a session configuration
         let configuration = ARWorldTrackingConfiguration()
-
+        configuration.planeDetection = [.vertical]
         // Run the view's session
         sceneView.session.run(configuration)
     }
@@ -57,6 +57,54 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         return node
     }
 */
+  
+    @IBAction func screenTapped(_ sender: UITapGestureRecognizer) {
+        let touchLocation = sender.location(in: sceneView)
+        let hitTestResult = sceneView.hitTest(touchLocation,types:
+        [.existingPlaneUsingExtent])
+        if let result = hitTestResult.first {
+            addHoop(result: result)
+        }
+        
+    }
+    
+    
+    
+    func createFloor() -> SCNNode {
+        let node = SCNNode()
+        let geometry = SCNPlane(width: 1.0, height: 1.0)
+        node.geometry = geometry
+        node.eulerAngles.x = -Float.pi / 2
+        node.opacity = 0.25
+        return node
+        
+    }
+    
+    func renderer(_ renderer: SCNSceneRenderer, didAdd node:
+        SCNNode, for anchor: ARAnchor) {
+        guard let planeAnchor = anchor as? ARPlaneAnchor else {
+            return
+        }
+        print("A new plane has been discovered.")
+    }
+    
+    func addHoop(result: ARHitTestResult) {
+        let hoopScene = SCNScene(named: "art.scnassets/hoop.scn")
+        guard let hoopNode = hoopScene?.rootNode.childNode(withName: "Hoop", recursively: false) else {
+            return
+        }
+        let planePosition = result.worldTransform.columns.3
+        hoopNode.position = SCNVector3(planePosition.x, planePosition.y, planePosition.z)
+        
+        
+        sceneView.scene.rootNode.addChildNode(hoopNode)
+    }
+    func createBasketball() {
+        let ball = SCNNode(geometry: SCNSphere(radius: 0.25))
+        ball.geometry?.firstMaterial?.diffuse.contents = UIColor.orange
+        sceneView.scene.rootNode.addChildNode(ball)
+    }
+    
     
     func session(_ session: ARSession, didFailWithError error: Error) {
         // Present an error message to the user
